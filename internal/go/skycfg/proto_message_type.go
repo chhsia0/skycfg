@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/descriptor"
-	"github.com/golang/protobuf/proto"
 	descriptor_pb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"go.starlark.net/starlark"
 )
@@ -40,20 +39,22 @@ func newMessageType(registry ProtoRegistry, nestedMsgName, name string) (starlar
 		return nil, fmt.Errorf("Protobuf message type %q not found", name)
 	}
 
-	var emptyMsg descriptor.Message
-	if goType.Kind() == reflect.Ptr {
-		goValue := reflect.New(goType.Elem()).Interface()
-		if iface, ok := goValue.(descriptor.Message); ok {
-			emptyMsg = iface
+	emptyMsg := func() descriptor.Message {
+		if goType.Kind() == reflect.Ptr {
+			goValue := reflect.New(goType.Elem()).Interface()
+			if iface, ok := goValue.(descriptor.Message); ok {
+				return iface
+			}
 		}
+		return nil
 	}
-	if emptyMsg == nil {
+	if emptyMsg() == nil {
 		// Return a slightly useful error in case some clever person has
 		// manually registered a `proto.Message` that doesn't use pointer
 		// receivers.
 		return nil, fmt.Errorf("InternalError: %v is not a generated proto.Message", goType)
 	}
-	fileDesc, msgDesc := descriptor.ForMessage(emptyMsg)
+	fileDesc, msgDesc := descriptor.ForMessage(emptyMsg())
 	mt := &skyProtoMessageType{
 		registry:      registry,
 		fileDesc:      fileDesc,
@@ -85,7 +86,7 @@ type skyProtoMessageType struct {
 	nestedMsgName string
 
 	// An empty protobuf message of the appropriate type.
-	emptyMsg proto.Message
+	emptyMsg func() descriptor.Message
 }
 
 var _ starlark.HasAttrs = (*skyProtoMessageType)(nil)
@@ -102,7 +103,7 @@ func (mt *skyProtoMessageType) Hash() (uint32, error) {
 }
 
 func (mt *skyProtoMessageType) Name() string {
-	return messageTypeName(mt.emptyMsg)
+	return messageTypeName(mt.emptyMsg())
 }
 
 func (mt *skyProtoMessageType) Attr(attrName string) (starlark.Value, error) {
@@ -152,7 +153,7 @@ func (mt *skyProtoMessageType) CallInternal(thread *starlark.Thread, args starla
 		return nil, err
 	}
 
-	wrapper := NewSkyProtoMessage(proto.Clone(mt.emptyMsg))
+	wrapper := NewSkyProtoMessage(mt.emptyMsg())
 
 	// Parse the kwarg set into a map[string]starlark.Value, containing one
 	// entry for each provided kwarg. Keys are the original protobuf field names.
