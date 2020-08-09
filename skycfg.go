@@ -32,7 +32,7 @@ import (
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
 
-	impl "github.com/stripe/skycfg/internal/go/skycfg"
+	impl "github.com/chhsia0/skycfg/internal/go/skycfg"
 )
 
 // A FileReader controls how load() calls resolve and read other modules.

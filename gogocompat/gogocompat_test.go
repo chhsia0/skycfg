@@ -24,7 +24,7 @@ import (
 	_ "github.com/golang/protobuf/ptypes/wrappers"
 	"go.starlark.net/starlark"
 
-	impl "github.com/stripe/skycfg/internal/go/skycfg"
+	impl "github.com/chhsia0/skycfg/internal/go/skycfg"
 )
 
 func skyEval(t *testing.T, src string) starlark.Value {

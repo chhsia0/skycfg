@@ -1,5 +1,7 @@
 module github.com/stripe/skycfg/_examples/k8s
 
+go 1.14
+
 require (
 	cloud.google.com/go v0.26.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
