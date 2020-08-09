@@ -39,8 +39,8 @@ import (
 
 	descriptorpb "github.com/golang/protobuf/protoc-gen-go/descriptor"
 
-	pb "github.com/stripe/skycfg/internal/testdata/test_proto"
-	pb_gogo "github.com/stripe/skycfg/internal/testdata/test_proto_gogo"
+	pb "github.com/chhsia0/skycfg/internal/testdata/test_proto"
+	pb_gogo "github.com/chhsia0/skycfg/internal/testdata/test_proto_gogo"
 )
 
 func init() {

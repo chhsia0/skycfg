@@ -34,8 +34,8 @@ import (
 	_ "k8s.io/api/core/v1"
 	_ "k8s.io/api/storage/v1"
 
-	"github.com/stripe/skycfg"
-	"github.com/stripe/skycfg/gogocompat"
+	"github.com/chhsia0/skycfg"
+	"github.com/chhsia0/skycfg/gogocompat"
 )
 
 func main() {
@@ -132,8 +132,8 @@ func (help *replHelp) String() string {
 	var buf bytes.Buffer
 	buf.WriteString(`Skycfg, a library for building complex typed configs.
 
-Homepage: https://github.com/stripe/skycfg
-API docs: https://godoc.org/github.com/stripe/skycfg
+Homepage: https://github.com/chhsia0/skycfg
+API docs: https://godoc.org/github.com/chhsia0/skycfg
 
 Pre-defined values:
 `)
