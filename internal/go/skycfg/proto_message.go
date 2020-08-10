@@ -32,6 +32,7 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"go.starlark.net/starlark"
 	"go.starlark.net/syntax"
+	"k8s.io/gengo/namer"
 )
 
 // A Starlark built-in type representing a Protobuf message. Provides attributes
@@ -115,6 +116,27 @@ func NewSkyProtoMessage(msg proto.Message) *skyProtoMessage {
 	}
 
 	protoProps := protoGetProperties(wrapper.val.Type())
+	// We assign tags for untagged public fields to support go-to-protobuf messages.
+	highest := 0
+	for _, prop := range protoProps.Prop {
+		if prop.Tag > highest {
+			highest = prop.Tag
+		}
+	}
+	for _, prop := range protoProps.Prop {
+		if prop.Tag > 0 {
+			continue
+		}
+		if _, ok := protoProps.OneofTypes[prop.OrigName]; ok {
+			continue
+		}
+		if namer.IsPrivateGoName(prop.OrigName) || strings.HasPrefix(prop.OrigName, "XXX_") {
+			continue
+		}
+		highest++
+		prop.Tag = highest
+		prop.OrigName = namer.IL(prop.OrigName)
+	}
 	for _, prop := range protoProps.Prop {
 		if prop.Tag == 0 {
 			// Skip attributes that don't correspond to a protobuf field.
