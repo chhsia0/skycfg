@@ -95,20 +95,27 @@ func protoGetProperties(t reflect.Type) *proto.StructProperties {
 		f := t.Field(ii)
 		if f.Tag.Get("protobuf") == "" && f.Tag.Get("protobuf_oneof") == "" &&
 			!strings.HasPrefix(f.Name, "XXX_") && !namer.IsPrivateGoName(f.Name) {
-			var wire string
-			switch f.Type.Kind() {
-			case reflect.Bool, reflect.Int, reflect.Int32, reflect.Int64,
-				reflect.Uint, reflect.Uint32, reflect.Uint64:
-				wire = "varint"
-			case reflect.Map, reflect.Ptr, reflect.Slice, reflect.String:
-				wire = "bytes"
-			case reflect.Float32:
-				wire = "fixed32"
-			case reflect.Float64:
-				wire = "fixed64"
+			// Extract name from JSON field tag.
+			name := strings.Split(f.Tag.Get("json"), ",")[0]
+			if name == "" {
+				name = namer.IL(f.Name)
 			}
-			highest++
-			f.Tag = reflect.StructTag(fmt.Sprintf(`protobuf:"%s,%d,name=%s"`, wire, highest, namer.IL(f.Name)))
+			if name != "-" {
+				var wire string
+				switch f.Type.Kind() {
+				case reflect.Bool, reflect.Int, reflect.Int32, reflect.Int64,
+					reflect.Uint, reflect.Uint32, reflect.Uint64:
+					wire = "varint"
+				case reflect.Map, reflect.Ptr, reflect.Slice, reflect.String:
+					wire = "bytes"
+				case reflect.Float32:
+					wire = "fixed32"
+				case reflect.Float64:
+					wire = "fixed64"
+				}
+				highest++
+				f.Tag = reflect.StructTag(fmt.Sprintf(`protobuf:"%s,%d,name=%s"`, wire, highest, name))
+			}
 		}
 		fields = append(fields, f)
 	}
