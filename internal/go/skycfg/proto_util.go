@@ -27,6 +27,7 @@ import (
 	"github.com/golang/protobuf/descriptor"
 	"github.com/golang/protobuf/proto"
 	descriptor_pb "github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"k8s.io/gengo/namer"
 )
 
 func mustParseFileDescriptor(gzBytes []byte) *descriptor_pb.FileDescriptorProto {
@@ -80,6 +81,38 @@ func messageTypeName(msg proto.Message) string {
 // around oneof parsing for GoGo.
 func protoGetProperties(t reflect.Type) *proto.StructProperties {
 	got := proto.GetProperties(t)
+
+	// Set the protobuf field names and tag numbers for untagged public
+	// fields to support go-to-protobuf messages.
+	highest := 0
+	for _, prop := range got.Prop {
+		if prop.Tag > highest {
+			highest = prop.Tag
+		}
+	}
+	fields := []reflect.StructField{}
+	for ii := 0; ii < t.NumField(); ii++ {
+		f := t.Field(ii)
+		if f.Tag.Get("protobuf") == "" && f.Tag.Get("protobuf_oneof") == "" &&
+			!strings.HasPrefix(f.Name, "XXX_") && !namer.IsPrivateGoName(f.Name) {
+			var wire string
+			switch f.Type.Kind() {
+			case reflect.Bool, reflect.Int, reflect.Int32, reflect.Int64,
+				reflect.Uint, reflect.Uint32, reflect.Uint64:
+				wire = "varint"
+			case reflect.Map, reflect.Ptr, reflect.Slice, reflect.String:
+				wire = "bytes"
+			case reflect.Float32:
+				wire = "fixed32"
+			case reflect.Float64:
+				wire = "fixed64"
+			}
+			highest++
+			f.Tag = reflect.StructTag(fmt.Sprintf(`protobuf:"%s,%d,name=%s"`, wire, highest, namer.IL(f.Name)))
+		}
+		fields = append(fields, f)
+	}
+	got.Prop = proto.GetProperties(reflect.StructOf(fields)).Prop
 
 	// If OneofTypes was already populated, then the go-protobuf
 	// properties parser was fully successful and we don't need to do
