@@ -21,6 +21,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"reflect"
 	"strings"
 
@@ -90,6 +91,7 @@ func protoGetProperties(t reflect.Type) *proto.StructProperties {
 			highest = prop.Tag
 		}
 	}
+	log.Println(t)
 	fields := []reflect.StructField{}
 	for ii := 0; ii < t.NumField(); ii++ {
 		f := t.Field(ii)
@@ -117,9 +119,13 @@ func protoGetProperties(t reflect.Type) *proto.StructProperties {
 				f.Tag = reflect.StructTag(fmt.Sprintf(`protobuf:"%s,%d,name=%s"`, wire, highest, name))
 			}
 		}
+		log.Println(f.Tag)
 		fields = append(fields, f)
 	}
 	got.Prop = proto.GetProperties(reflect.StructOf(fields)).Prop
+	for _, prop := range got.Prop {
+		log.Println(prop)
+	}
 
 	// If OneofTypes was already populated, then the go-protobuf
 	// properties parser was fully successful and we don't need to do
