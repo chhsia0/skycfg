@@ -117,6 +117,11 @@ func protoGetProperties(t reflect.Type) *proto.StructProperties {
 				f.Tag = reflect.StructTag(fmt.Sprintf(`protobuf:"%s,%d,name=%s"`, wire, highest, name))
 			}
 		}
+		if len(fields) > 0 {
+			// For StructOf to work, only the first field can be an embedded field. See:
+			// https://github.com/golang/go/issues/20824
+			f.Anonymous = false
+		}
 		fields = append(fields, f)
 	}
 	got.Prop = proto.GetProperties(reflect.StructOf(fields)).Prop
